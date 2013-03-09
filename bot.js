@@ -2,8 +2,9 @@
 var irc = require('irc'), fs = require('fs');
 
 // Messages logging
-var linesBuffer=[],
+var	linesBuffer=[],
 	bufferTimeout,
+	watchs=[],
  	IRC_SRV='irc.freenode.net',
  	IRC_PORT=8002,
  	BOT_NAME='FranceJSBot',
@@ -32,32 +33,51 @@ function logMessage(from,message)
 	}
 
 // Commands
-function executeCommand(command)
+function executeCommand(command,from)
 	{
-	switch(command.split(' ')[0])
+	switch(command.split(' ')[0].toLowerCase())
 		{
 		case 'ls':
+		case 'help':
+		case 'commands':
 			return ['I understand the following commands :',
 				'- ls/commands : list commands',
 				'- hello/lo : kinda cool to say hello !',
+				'- watch <nickname> : tells you when <nickname> talk',
+				'- unwatch <nickname> : stops telling you when <nickname> talk',
 				'- seen <nickname> : last connection of <nickname> (not implemented)',
-				'- watch <nickname> : tells you when <nickname> talk (not implemented)',
-				'- unwatch <nickname> : stops telling you when <nickname> talk (not implemented)',
 				'- diffuse <message> : diffuse a message to each js chan (#parisjs, #francejs) (not implemented)',
 				'- log <n> <start> <date> : give the <n> messages from <start> on <date> (not implemented)',
 				'- todo : adds items todo (not implemented)'];
 		case 'lo':
 		case 'hello':
+		case 'hi':
 			return ['Hi ! Nice to see you !'];
-		case 'seen':
 		case 'watch':
+			var args=command.split(' ');
+			if(args.length<2)
+				return ['Not enought args given for the watch command.'];
+			if(args[1]==BOT_NAME)
+				return ['Bots have private life too.'];
+			if(watchs[args[1]]&&-1!==watchs[args[1]].indexOf(from))
+				return ['You\'re already watching '+args[1]+'.'];
+			(undefined!==watchs[args[1]]&&watchs[args[1]].push(from)||(watchs[args[1]]=[from+'']));
+			return ['Now you\'re watching '+args[1]+'.'];
 		case 'unwatch':
+			var args=command.split(' ');
+			if(args.length<2)
+				return ['Not enought args given for the unwatch command'];
+			var index=watchs[args[1]].indexOf(from);
+			if(watchs[args[1]]&&-1!==index&&watchs[args[1]].splice(index,1));
+				return ['You unwatched '+args[1]+'.'];
+			return ['You wasn\'t watching '+args[1]+'.'];
+		case 'seen':
 		case 'diffuse':
 		case 'log':
 		case 'todo':
-			return ['Not implemented, but feel free to : http://github.com/francejs'];
+			return ['Not implemented, but feel free to : https://github.com/francejs/irc-bot'];
 		}
-	return ["You\'re talking to me ??"];
+	return ["You\'re talking to me ?? Try ls."];
 	}
 	
 // Starting IRC client
@@ -74,24 +94,32 @@ var botRegExp=new RegExp(BOT_NAME+'([ ,:]+)');
 client.addListener('message'+MAIN_CHANNEL, function (from, message)
 	{
 	console.log(from + ' => '+MAIN_CHANNEL+': ' + message);
+	// Logging message
 	logMessage(from, message);
 	// Looking for a comand to execute
 	if(-1!==message.indexOf(BOT_NAME))
 		{
-		executeCommand(message.replace(botRegExp,'')).forEach(function(msg,i)
+		executeCommand(message.replace(botRegExp,''),from).forEach(function(msg,i)
 			{
 			client.say(MAIN_CHANNEL,(i===0?from +': ':'')+ msg);
 			});
 		}
+	// Telling watchers
+	(watchs[from]||[]).forEach(function(watcher,i)
+			{
+			client.say(watcher,from +' said : '+ message);
+			});
 	});
 
 client.addListener('pm', function (from, message)
 	{
-	executeCommand(message).forEach(function(msg)
+	executeCommand(message,from).forEach(function(msg)
 		{
 		client.say(from, msg);
 		});
 	});
+
+// Shoud listen for disconnections to discard watchs
 
 client.addListener('error', function(message)
 	{
