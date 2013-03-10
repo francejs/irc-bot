@@ -1,10 +1,11 @@
 // Let's invite people to the party !
 var irc = require('irc'), fs = require('fs');
 
-// Messages logging
+// vars
 var	linesBuffer=[],
 	bufferTimeout,
 	watchs=[],
+// consts
  	IRC_SRV='irc.freenode.net',
  	IRC_PORT=8002,
  	BOT_NAME='FranceJSBot',
@@ -16,7 +17,8 @@ var	linesBuffer=[],
 	IRC_EVENT_MSG=1,
 	IRC_EVENT_JOIN=2,
 	IRC_EVENT_PART=4,
-	IRC_EVENT_TOPIC=8;
+	IRC_EVENT_TOPIC=8,
+	IRC_EVENT_BOT=16;
 
 // Write messages to the log when timeout is fired
 function writeMessages()
@@ -32,20 +34,24 @@ function writeMessages()
 // Add message to buffer
 function logMessage(type,fields)
 	{
+	var message;
 	if(linesBuffer.length<BUFFER_SIZE&&bufferTimeout)
 		clearTimeout(bufferTimeout);
 	if(fields.length!==2)
 		throw RangeError('Not enougth fields sent');
+	// Saving message
+	message=fields[1];
 	// Escaping double quotes
 	fields.forEach(function(item,i)
 		{
-		fields[i]='"'+item.replace('"','\\"')+'"';
+		fields[i]='"'+item.replace(/"/g,'\\"')+'"';
 		});
 	// Adding log type and date
 	fields.unshift(type,Date.now()); // unshift to keep CSV format extendable
 	// Pushing to the buffer
 	linesBuffer.push(fields.join(','));
 	bufferTimeout=setTimeout(writeMessages,BUFFER_TIMEOUT*1000);
+	return message;
 	}
 
 // Commands
@@ -123,7 +129,7 @@ client.addListener('message'+MAIN_CHANNEL, function (from, message)
 		{
 		executeCommand(message.replace(botRegExp,''),from).forEach(function(msg,i)
 			{
-			client.say(MAIN_CHANNEL,(i===0?from +': ':'')+ msg);
+			client.say(MAIN_CHANNEL,logMessage(IRC_EVENT_MSG|IRC_EVENT_BOT,[BOT_NAME,(i===0?from +': ':'')+ msg]));
 			});
 		}
 	// Telling watchers
@@ -144,12 +150,15 @@ client.addListener('pm', function (from, message)
 client.addListener('join'+MAIN_CHANNEL, function (from, message)
 	{
 	if(-1!==from.indexOf(BOT_NAME))
-		client.say(MAIN_CHANNEL, 'Pouah! This chan is filled with humans.');
+		{
+		logMessage(IRC_EVENT_JOIN|IRC_EVENT_BOT,[from, from+' join the chan.']);
+		client.say(MAIN_CHANNEL, logMessage(IRC_EVENT_MSG|IRC_EVENT_BOT,[BOT_NAME,'Pouah! This chan is filled with humans.']));
+		}
 	else
 		{
 		logMessage(IRC_EVENT_JOIN,[from, from+' join the chan.']);
 		// Enable this when someone connects for the first time only
-		//client.say(MAIN_CHANNEL, 'Welcome '+from+'. I obey to commands, not to humans.');
+		//client.say(MAIN_CHANNEL, logMessage(IRC_EVENT_MSG|IRC_EVENT_BOT,[BOT_NAME,'Welcome '+from+'. I obey to commands, not to humans.']));
 		}
 	});
 
