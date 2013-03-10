@@ -17,7 +17,9 @@ var	linesBuffer=[],
 // Write messages to the log when timeout is fired
 function writeMessages()
 	{
-	fs.appendFile(__dirname+'/'+LOG_DIR+'/irc.log', linesBuffer.join('\n')+'\n', function(err)
+	var curDate=new Date();
+	fs.appendFile(__dirname+'/'+LOG_DIR+'/irc-'+curDate.getDate()++'-'curDate.getFullYear()+'.log',
+		linesBuffer.join('\n')+'\n', function(err)
 		{
 		console.log(err||"Message buffer saved!");
 		});
@@ -53,6 +55,13 @@ function executeCommand(command,from)
 		case 'hello':
 		case 'hi':
 			return ['Hi ! Nice to see you !'];
+		case 'bitch':
+		case 'bastard':
+		case 'motherfucker':
+		case 'fucker':
+		case 'idiot':
+		case 'git':
+			return ['Nice to meet you "'+command.split(' ')[0]+'", I\'m '+BOT_NAME+', waiting for commands !'];
 		case 'watch':
 			var args=command.split(' ');
 			if(args.length<2)
