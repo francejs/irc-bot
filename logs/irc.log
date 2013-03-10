@@ -69,3 +69,60 @@
 "rhannequin","FranceJSBot, hello",1362845880204
 "rhannequin","<3",1362845883913
 "nfroidure","rhannequin, le code est là : https://github.com/francejs/irc-bot",1362846044933
+"rhannequin","merci",1362846097026
+"nfroidure","Tiens un message d'accueil du bot, fun ou useless ?",1362849326821
+"nfroidure","Encore un beau logo sur Google Plus : https://plus.google.com/u/0/communities/112831300754603977687",1362849626875
+"FranceJSBot","Pouah ! This chan if filled with humans.",1362851336399
+"nfroidure","Bon, et j'arrête de jouer :)",1362851524994
+"_kud","haha nfroidure",1362851628947
+"_kud",":D",1362851629527
+"_kud","FranceJSBot, hello",1362851637075
+"_kud","FranceJSBot,  how are you",1362851641684
+"nfroidure","_kud, le watch marche",1362851793228
+"_kud",":)",1362852207347
+"_kud",":)",1362852863126
+"_kud","Salut ma caille",1362853834225
+"_kud","FranceJSBot, hello",1362853836834
+"_kud","Ca va être reloo ça nfroidure",1362853895073
+"lbdremy","commands",1362854387281
+"lbdremy","--help",1362854401766
+"lbdremy","FranceJSBot --help",1362854486732
+"lbdremy","FranceJSBot --ls",1362854492507
+"lbdremy","FranceJSBot ls",1362854496043
+"lbdremy","FranceJSBot lo",1362854568721
+"_kud","Ah ca s'amuse hein.",1362854579668
+"lbdremy","lol",1362854585431
+"lbdremy","FranceJSBot make me a sandwich",1362854660585
+"_kud","FranceJSBot, bitch",1362854685550
+"_kud","yes",1362854687063
+"lbdremy","FranceJSBot watch FranceJSBot",1362854942859
+"madx`","relou le bot :)",1362860529512
+"Amatewasu","Il est écrit en JavaScript au moins ? :D",1362860556781
+"nfroidure","Amatewasu,",1362860622119
+"nfroidure","yep :)",1362860625689
+"nfroidure","Je le restart et je désactive le msg d'accueil",1362860636473
+"Amatewasu","Ouf :D",1362860662904
+"madx`","nfroidure: pour ce qui est du listing de commandes amha il vaut mieux que ça se fasse en privé",1362860867488
+"madx`","ça évite de polluer le chan",1362860870725
+"_kud","re",1362865101166
+"_kud","Ouais, et encore",1362865115167
+"_kud","on s'en carre",1362865117330
+"madx`","nfroidure: tu pourrais te servir du bot pour fournir des logs publcis aussi",1362865225206
+"madx`","ça serait pas mal",1362865227318
+"_kud","c'est ce qu'il fait, madx`",1362866378441
+"madx`","ils sont accessibles ?",1362866433076
+"_kud","pas encore",1362866440459
+"madx`","genre un .html quelque part ?",1362866440628
+"madx`","ah ok :)",1362866442574
+"_kud","je sais pas",1362866442922
+"_kud","je sais qu'il log",1362866445006
+"_kud","c'est tout",1362866446147
+"madx`","ok :)",1362866503141
+"nfroidure","madx`, https://github.com/francejs/irc-bot/blob/master/logs/irc.log",1362868341426
+"nfroidure","Par contre, sur le format, j'ai pris CSV",1362868355806
+"nfroidure","Mais il faudrait voir si ça vaut le coup de logger les join et les quit, les renames et le bot",1362868385744
+"nfroidure","Ah, et le fichier est unique, il faudra sûrement le quotidianniser",1362868410592
+"nfroidure","Et ptêt aussi le virer de gutHub et faire un post via un service web.",1362868439880
+"nfroidure","Mais bon... chaque chose en son temps.",1362868453615
+"nfroidure","Good night à tous !",1362868461283
+"nfroidure","FranceJSBot, i love you :)",1362868471502

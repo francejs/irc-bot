@@ -119,6 +119,15 @@ client.addListener('pm', function (from, message)
 		});
 	});
 
+client.addListener('join'+MAIN_CHANNEL, function (from, message)
+	{
+	if(-1!==from.indexOf(BOT_NAME))
+		client.say(MAIN_CHANNEL, 'Pouah ! This chan is filled with humans.');
+	// Enable this when someone connects for the first time only
+	//else
+	//	client.say(MAIN_CHANNEL, 'Welcome '+from+'. I obey to commands, not to humans.');
+	});
+
 // Shoud listen for disconnections to discard watchs
 
 client.addListener('error', function(message)
