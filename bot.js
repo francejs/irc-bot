@@ -12,13 +12,17 @@ var	linesBuffer=[],
  	MAIN_CHANNEL='#francejs', // seconds
  	BUFFER_TIMEOUT=6, // seconds
  	BUFFER_SIZE=10, // lines
-	LOG_DIR='logs'; // rel to script path
+	LOG_DIR='logs', // rel to script path
+	IRC_EVENT_MSG=1,
+	IRC_EVENT_JOIN=2,
+	IRC_EVENT_PART=4,
+	IRC_EVENT_TOPIC=8;
 
 // Write messages to the log when timeout is fired
 function writeMessages()
 	{
 	var curDate=new Date();
-	fs.appendFile(__dirname+'/'+LOG_DIR+'/irc-'+curDate.getDate()++'-'curDate.getFullYear()+'.log',
+	fs.appendFile(__dirname+'/'+LOG_DIR+'/irc-'+curDate.getDate()+'-'+curDate.getFullYear()+'.log',
 		linesBuffer.join('\n')+'\n', function(err)
 		{
 		console.log(err||"Message buffer saved!");
@@ -26,11 +30,21 @@ function writeMessages()
 	linesBuffer.length=0;
 	}
 // Add message to buffer
-function logMessage(from,message)
+function logMessage(type,fields)
 	{
 	if(linesBuffer.length<BUFFER_SIZE&&bufferTimeout)
 		clearTimeout(bufferTimeout);
-	linesBuffer.push('"'+from+'","'+message+'",'+Date.now());
+	if(fields.length!==2)
+		throw RangeError('Not enougth fields sent');
+	// Escaping double quotes
+	fields.forEach(function(item,i)
+		{
+		fields[i]='"'+item.replace('"','\\"')+'"';
+		});
+	// Adding log type and date
+	fields.unshift(type,Date.now()); // unshift to keep CSV format extendable
+	// Pushing to the buffer
+	linesBuffer.push(fields.join(','));
 	bufferTimeout=setTimeout(writeMessages,BUFFER_TIMEOUT*1000);
 	}
 
@@ -44,7 +58,7 @@ function executeCommand(command,from)
 		case 'commands':
 			return ['I understand the following commands :',
 				'- ls/commands : list commands',
-				'- hello/lo : kinda cool to say hello !',
+				'- hello/lo : kinda cool to say hello!',
 				'- watch <nickname> : tells you when <nickname> talk',
 				'- unwatch <nickname> : stops telling you when <nickname> talk',
 				'- seen <nickname> : last connection of <nickname> (not implemented)',
@@ -54,14 +68,14 @@ function executeCommand(command,from)
 		case 'lo':
 		case 'hello':
 		case 'hi':
-			return ['Hi ! Nice to see you !'];
+			return ['Hi! Nice to see you!'];
 		case 'bitch':
 		case 'bastard':
 		case 'motherfucker':
 		case 'fucker':
 		case 'idiot':
 		case 'git':
-			return ['Nice to meet you "'+command.split(' ')[0]+'", I\'m '+BOT_NAME+', waiting for commands !'];
+			return ['Nice to meet you "'+command.split(' ')[0]+'", I\'m '+BOT_NAME+', waiting for commands!'];
 		case 'watch':
 			var args=command.split(' ');
 			if(args.length<2)
@@ -102,9 +116,8 @@ var client = new irc.Client(IRC_SRV, BOT_NAME,
 var botRegExp=new RegExp(BOT_NAME+'([ ,:]+)');
 client.addListener('message'+MAIN_CHANNEL, function (from, message)
 	{
-	console.log(from + ' => '+MAIN_CHANNEL+': ' + message);
 	// Logging message
-	logMessage(from, message);
+	logMessage(IRC_EVENT_MSG,[from, message]);
 	// Looking for a comand to execute
 	if(-1!==message.indexOf(BOT_NAME))
 		{
@@ -131,10 +144,23 @@ client.addListener('pm', function (from, message)
 client.addListener('join'+MAIN_CHANNEL, function (from, message)
 	{
 	if(-1!==from.indexOf(BOT_NAME))
-		client.say(MAIN_CHANNEL, 'Pouah ! This chan is filled with humans.');
-	// Enable this when someone connects for the first time only
-	//else
-	//	client.say(MAIN_CHANNEL, 'Welcome '+from+'. I obey to commands, not to humans.');
+		client.say(MAIN_CHANNEL, 'Pouah! This chan is filled with humans.');
+	else
+		{
+		logMessage(IRC_EVENT_JOIN,[from, from+' join the chan.']);
+		// Enable this when someone connects for the first time only
+		//client.say(MAIN_CHANNEL, 'Welcome '+from+'. I obey to commands, not to humans.');
+		}
+	});
+
+client.addListener('topic', function (chan, topic, nick, message)
+	{
+	nick&&logMessage(IRC_EVENT_TOPIC,[nick, nick+' change topic to "'+topic+'"']);
+	});
+
+client.addListener('part'+MAIN_CHANNEL, function (from, message)
+	{
+	logMessage(IRC_EVENT_PART,[from, from+' leave the chan.']);
 	});
 
 // Shoud listen for disconnections to discard watchs
