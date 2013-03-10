@@ -1,13 +1,17 @@
-=FranceJS IRC bot=
+FranceJS IRC bot
+============
 This is the IRC bot of the french Javascript group. It logs our IRC chan ( irc://irc.freenode.net/francejs )
 and obey to some commands. Feel free to complete him !
 
 
-== Getting started ==
+Getting started
+------------
 npm install irc; echo 'Enjoy'
 
-== For your information ==
+For your information
+------------
 irc packege documentation : https://node-irc.readthedocs.org/en/latest/API.html
 
-== Licence ==
+Licence
+------------
 Do What The Fuck You Want !
