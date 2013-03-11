@@ -56,7 +56,7 @@ function logMessage(type,fields)
 	}
 
 // Commands
-function executeCommand(command,from)
+function executeCommand(command,nick)
 	{
 	switch(command.split(' ')[0].toLowerCase())
 		{
@@ -70,7 +70,7 @@ function executeCommand(command,from)
 				'- unwatch <nickname> : stops telling you when <nickname> talk',
 				'- seen <nickname> : last connection of <nickname> (not implemented)',
 				'- diffuse <message> : diffuse a message to each js chan (#parisjs, #francejs) (not implemented)',
-				'- log <n> <start> <date> : give the <n> messages from <start> on <date> (not implemented)',
+				'- log <n> <start> <date> : give the <n> messages nick <start> on <date> (not implemented)',
 				'- todo : adds items todo (not implemented)'];
 		case 'lo':
 		case 'hello':
@@ -89,15 +89,15 @@ function executeCommand(command,from)
 				return ['Not enought args given for the watch command.'];
 			if(args[1]==BOT_NAME)
 				return ['Bots have private life too.'];
-			if(watchs[args[1]]&&-1!==watchs[args[1]].indexOf(from))
+			if(watchs[args[1]]&&-1!==watchs[args[1]].indexOf(nick))
 				return ['You\'re already watching '+args[1]+'.'];
-			(undefined!==watchs[args[1]]&&watchs[args[1]].push(from)||(watchs[args[1]]=[from+'']));
+			(undefined!==watchs[args[1]]&&watchs[args[1]].push(nick)||(watchs[args[1]]=[nick+'']));
 			return ['Now you\'re watching '+args[1]+'.'];
 		case 'unwatch':
 			var args=command.split(' ');
 			if(args.length<2)
 				return ['Not enought args given for the unwatch command'];
-			var index=watchs[args[1]].indexOf(from);
+			var index=watchs[args[1]].indexOf(nick);
 			if(watchs[args[1]]&&-1!==index&&watchs[args[1]].splice(index,1));
 				return ['You unwatched '+args[1]+'.'];
 			return ['You wasn\'t watching '+args[1]+'.'];
@@ -121,46 +121,46 @@ var client = new irc.Client(IRC_SRV, BOT_NAME,
 
 // Listening for messages
 var botRegExp=new RegExp(BOT_NAME+'([ ,:]+)');
-client.addListener('message'+MAIN_CHANNEL, function (from, message)
+client.addListener('message'+MAIN_CHANNEL, function (nick, message)
 	{
 	// Logging message
-	logMessage(IRC_EVENT_MSG,[from, message]);
+	logMessage(IRC_EVENT_MSG,[nick, message]);
 	// Looking for a comand to execute
 	if(-1!==message.indexOf(BOT_NAME))
 		{
-		executeCommand(message.replace(botRegExp,''),from).forEach(function(msg,i)
+		executeCommand(message.replace(botRegExp,''),nick).forEach(function(msg,i)
 			{
-			client.say(MAIN_CHANNEL,logMessage(IRC_EVENT_MSG|IRC_EVENT_BOT,[BOT_NAME,(i===0?from +': ':'')+ msg]));
+			client.say(MAIN_CHANNEL,logMessage(IRC_EVENT_MSG|IRC_EVENT_BOT,[BOT_NAME,(i===0?nick +': ':'')+ msg]));
 			});
 		}
 	// Telling watchers
-	(watchs[from]||[]).forEach(function(watcher,i)
+	(watchs[nick]||[]).forEach(function(watcher,i)
 			{
-			client.say(watcher,from +' said : '+ message);
+			client.say(watcher,nick +' said : '+ message);
 			});
 	});
 
-client.addListener('pm', function (from, message)
+client.addListener('pm', function (nick, message)
 	{
-	executeCommand(message,from).forEach(function(msg)
+	executeCommand(message,nick).forEach(function(msg)
 		{
-		client.say(from, msg);
+		client.say(nick, msg);
 		});
 	});
 
 // Listening for incoming people
-client.addListener('join'+MAIN_CHANNEL, function (from, message)
+client.addListener('join'+MAIN_CHANNEL, function (nick, message)
 	{
-	if(-1!==from.indexOf(BOT_NAME))
+	if(-1!==nick.indexOf(BOT_NAME))
 		{
-		logMessage(IRC_EVENT_JOIN|IRC_EVENT_BOT,[from, from+' join the chan.']);
+		logMessage(IRC_EVENT_JOIN|IRC_EVENT_BOT,[nick, nick+' join the chan.']);
 		client.say(MAIN_CHANNEL, logMessage(IRC_EVENT_MSG|IRC_EVENT_BOT,[BOT_NAME,'Pouah! This chan is filled with humans.']));
 		}
 	else
 		{
-		logMessage(IRC_EVENT_JOIN,[from, from+' join the chan.']);
+		logMessage(IRC_EVENT_JOIN,[nick, nick+' join the chan.']);
 		// Enable this when someone connects for the first time only
-		//client.say(MAIN_CHANNEL, logMessage(IRC_EVENT_MSG|IRC_EVENT_BOT,[BOT_NAME,'Welcome '+from+'. I obey to commands, not to humans.']));
+		//client.say(MAIN_CHANNEL, logMessage(IRC_EVENT_MSG|IRC_EVENT_BOT,[BOT_NAME,'Welcome '+nick+'. I obey to commands, not to humans.']));
 		}
 	});
 
@@ -171,9 +171,9 @@ client.addListener('topic', function (chan, topic, nick, message)
 	});
 
 // Listening for leaving people
-client.addListener('part'+MAIN_CHANNEL, function (from, message)
+client.addListener('part'+MAIN_CHANNEL, function (nick, message)
 	{
-	logMessage(IRC_EVENT_PART,[from, from+' leave the chan.']);
+	logMessage(IRC_EVENT_PART,[nick, nick+' leave the chan.']);
 	});
 client.addListener('quit', function (nick, reason, channels, message)
 	{
