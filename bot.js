@@ -18,7 +18,11 @@ var	linesBuffer=[],
 	IRC_EVENT_JOIN=2,
 	IRC_EVENT_PART=4,
 	IRC_EVENT_TOPIC=8,
-	IRC_EVENT_BOT=16;
+	IRC_EVENT_BOT=16,
+	IRC_EVENT_QUIT=32,
+	IRC_EVENT_KICK=64,
+	IRC_EVENT_KILL=128,
+	IRC_EVENT_NICK=256;
 
 // Write messages to the log when timeout is fired
 function writeMessages()
@@ -178,7 +182,27 @@ client.addListener('part'+MAIN_CHANNEL, function (nick, message)
 client.addListener('quit', function (nick, reason, channels, message)
 	{
 	if(-1!==channels.indexOf(MAIN_CHANNEL))
-		logMessage(IRC_EVENT_QUIT,[nick, nick+' leave the irc ('+reason+' '+message+').']);
+		logMessage(IRC_EVENT_QUIT,[nick, nick+' leave the IRC ('+reason+').']);
+	});
+
+// Listening for killed people
+client.addListener('kill', function (nick, reason, channels, message)
+	{
+	if(-1!==channels.indexOf(MAIN_CHANNEL))
+		logMessage(IRC_EVENT_KILL,[nick, nick+' has been killed from IRC ('+reason+').']);
+	});
+
+// Listening for kicked people
+client.addListener('kick'+MAIN_CHANNEL, function (nick, by, reason, message)
+	{
+	logMessage(IRC_EVENT_KICK,[nick, nick+' has been kicked by '+by+' ('+reason+').']);
+	});
+
+// Listening for nick changes
+client.addListener('nick', function (oldNick, newNick, channels, message)
+	{
+	if(-1!==channels.indexOf(MAIN_CHANNEL))
+		logMessage(IRC_EVENT_NICK,[oldNick, oldNick+' changed his nick for '+newNick+'.']);
 	});
 
 // Shoud listen for disconnections to discard watchs
