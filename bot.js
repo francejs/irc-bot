@@ -72,6 +72,7 @@ function executeCommand(command,nick)
 				'- hello/lo : kinda cool to say hello!',
 				'- watch <nickname> : tells you when <nickname> talk',
 				'- unwatch <nickname> : stops telling you when <nickname> talk',
+				'- dice <faces> <num> : Lets hazard comes',
 				'- seen <nickname> : last connection of <nickname> (not implemented)',
 				'- diffuse <message> : diffuse a message to each js chan (#parisjs, #francejs) (not implemented)',
 				'- log <n> <start> <date> : give the <n> messages nick <start> on <date> (not implemented)',
@@ -80,6 +81,22 @@ function executeCommand(command,nick)
 		case 'hello':
 		case 'hi':
 			return ['Hi! Nice to see you!'];
+		case 'd':
+		case 'roll':
+		case 'dice':
+			var args=command.split(' ');
+			if(args.length<2)
+				return ['Not enought args given for the d command.'];
+			args[1]=parseInt(args[1]);
+			args[2]=parseInt(args[2]);
+			if(isNaN(args[1])||args[1]<2)
+				return ['Invalid face count for d command (an int>=2).'];
+			if(args[2]&&(isNaN(args[2])||args[2]>10))
+				return ['Invalid dice count for d command (an int>=2).'];
+			var result = '';
+			for(var i=0, j=(args[2]?args[2]:1); i<j; i++)
+				result+=(result?' ':'')+Math.round((Math.random()*(args[1]-1))+1);
+			return ['Result: '+result];
 		case 'bitch':
 		case 'bastard':
 		case 'motherfucker':
