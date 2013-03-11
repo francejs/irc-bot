@@ -10,7 +10,7 @@ var	linesBuffer=[],
  	IRC_PORT=8002,
  	BOT_NAME='FranceJSBot',
  	BOT_REAL_NAME='Robot FranceJS',
- 	MAIN_CHANNEL='#francejs', // seconds
+ 	MAIN_CHANNEL='#francejs',
  	BUFFER_TIMEOUT=6, // seconds
  	BUFFER_SIZE=10, // lines
 	LOG_DIR='logs', // rel to script path
@@ -31,6 +31,7 @@ function writeMessages()
 		});
 	linesBuffer.length=0;
 	}
+
 // Add message to buffer
 function logMessage(type,fields)
 	{
@@ -147,6 +148,7 @@ client.addListener('pm', function (from, message)
 		});
 	});
 
+// Listening for incoming people
 client.addListener('join'+MAIN_CHANNEL, function (from, message)
 	{
 	if(-1!==from.indexOf(BOT_NAME))
@@ -162,17 +164,25 @@ client.addListener('join'+MAIN_CHANNEL, function (from, message)
 		}
 	});
 
+// Listening for topic changes
 client.addListener('topic', function (chan, topic, nick, message)
 	{
 	nick&&logMessage(IRC_EVENT_TOPIC,[nick, nick+' change topic to "'+topic+'"']);
 	});
 
+// Listening for leaving people
 client.addListener('part'+MAIN_CHANNEL, function (from, message)
 	{
 	logMessage(IRC_EVENT_PART,[from, from+' leave the chan.']);
 	});
+client.addListener('quit', function (nick, reason, channels, message)
+	{
+	if(-1!==channels.indexOf(MAIN_CHANNEL))
+		logMessage(IRC_EVENT_QUIT,[nick, nick+' leave the irc ('+reason+' '+message+').']);
+	});
 
 // Shoud listen for disconnections to discard watchs
+// or not, people will assume that watchs are disconnect safe
 
 client.addListener('error', function(message)
 	{
