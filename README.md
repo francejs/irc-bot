@@ -3,6 +3,8 @@ FranceJS IRC bot
 This is the IRC bot of the french Javascript group. It logs our IRC chan ( irc://irc.freenode.net/francejs )
 and obey to some commands. Feel free to complete him !
 
+Oh, be cool with our bot even if he don't like humans that much.
+
 
 Getting started
 ------------
@@ -10,7 +12,7 @@ npm install irc; echo 'Enjoy'
 
 For your information
 ------------
-irc packege documentation : https://node-irc.readthedocs.org/en/latest/API.html
+IRC package documentation : https://node-irc.readthedocs.org/en/latest/API.html
 
 Licence
 ------------
