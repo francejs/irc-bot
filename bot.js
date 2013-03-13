@@ -11,9 +11,11 @@ var	linesBuffer=[],
  	BOT_NAME='FranceJSBot',
  	BOT_REAL_NAME='Robot FranceJS',
  	MAIN_CHANNEL='#francejs',
+ 	ADMINS=['nfroidure','naholyr','_kud'],
  	BUFFER_TIMEOUT=6, // seconds
  	BUFFER_SIZE=10, // lines
 	LOG_DIR='logs', // rel to script path
+	LOG_NAME='irc', // rel to script path
 	IRC_EVENT_MSG=1,
 	IRC_EVENT_JOIN=2,
 	IRC_EVENT_PART=4,
@@ -28,7 +30,7 @@ var	linesBuffer=[],
 function writeMessages()
 	{
 	var curDate=new Date();
-	fs.appendFile(__dirname+'/'+LOG_DIR+'/irc-'+curDate.getDate()+'-'+curDate.getFullYear()+'.log',
+	fs.appendFile(__dirname+'/'+LOG_DIR+'/'+LOG_NAME+'-'+curDate.getDate()+'-'+curDate.getFullYear()+'.log',
 		linesBuffer.join('\n')+'\n', function(err)
 		{
 		console.log(err||"Message buffer saved!");
@@ -90,16 +92,21 @@ function executeCommand(command,nick)
 			args[1]=parseInt(args[1]);
 			args[2]=parseInt(args[2]);
 			if(isNaN(args[1])||args[1]<2)
-				return ['Invalid face count for d command (an int>=2).'];
-			if(args[2]&&(isNaN(args[2])||args[2]>10))
-				return ['Invalid dice count for d command (an int>=2).'];
+				return ['Invalid face count for d command (numFaces >= 2).'];
+			if(args[2]&&(isNaN(args[2])||args[2]<1||args[2]>11))
+				return ['Invalid dice count for d command (11 < numDices >= 2).'];
 			var result = '';
 			for(var i=0, j=(args[2]?args[2]:1); i<j; i++)
 				result+=(result?' ':'')+Math.round((Math.random()*(args[1]-1))+1);
-			return ['Result: '+result];
+			return [result];
+		case 'say':
+			if(-1===ADMINS.indexOf(nick))
+				return ['Not allowed to say that.'];
+			return [command.split(' ').splice(1).join(' ')];
 		case 'bitch':
 		case 'bastard':
 		case 'motherfucker':
+		case 'fuck':
 		case 'fucker':
 		case 'idiot':
 		case 'git':
@@ -136,8 +143,14 @@ var client = new irc.Client(IRC_SRV, BOT_NAME,
 	{
 	realName: BOT_REAL_NAME,
 	port: IRC_PORT,
-	debug: true,
-	channels: [MAIN_CHANNEL] //,'#parisjs'
+	autoRejoin: false,
+    autoConnect: false
+	});
+
+// Connecting to IRC
+client.connect(Infinity, function()
+	{
+	client.join(MAIN_CHANNEL);
 	});
 
 // Listening for messages
@@ -146,7 +159,7 @@ client.addListener('message'+MAIN_CHANNEL, function (nick, message)
 	{
 	// Logging message
 	logMessage(IRC_EVENT_MSG,[nick, message]);
-	// Looking for a comand to execute
+	// Looking for a command to execute
 	if(-1!==message.indexOf(BOT_NAME))
 		{
 		executeCommand(message.replace(botRegExp,''),nick).forEach(function(msg,i)
@@ -175,7 +188,7 @@ client.addListener('join'+MAIN_CHANNEL, function (nick, message)
 	if(-1!==nick.indexOf(BOT_NAME))
 		{
 		logMessage(IRC_EVENT_JOIN|IRC_EVENT_BOT,[nick, nick+' join the chan.']);
-		client.say(MAIN_CHANNEL, logMessage(IRC_EVENT_MSG|IRC_EVENT_BOT,[BOT_NAME,'Pouah! This chan is filled with humans.']));
+		//client.say(MAIN_CHANNEL, logMessage(IRC_EVENT_MSG|IRC_EVENT_BOT,[BOT_NAME,'Pouah! This chan is filled with humans.']));
 		}
 	else
 		{
