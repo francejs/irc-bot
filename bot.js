@@ -8,7 +8,7 @@ var	linesBuffer=[],
 // consts
  	IRC_SRV='irc.freenode.net',
  	IRC_PORT=8002,
- 	BOT_NAME='FranceJSBot',
+ 	BOT_NAME='Marionnette',
  	BOT_REAL_NAME='Robot FranceJS',
  	MAIN_CHANNEL='#francejs',
  	ADMINS=['nfroidure','naholyr','_kud'],
