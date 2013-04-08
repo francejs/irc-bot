@@ -34,7 +34,9 @@ var	linesBuffer=[],
 function writeMessages()
 	{
 	var curDate=new Date();
-	fs.appendFile(__dirname+'/'+LOG_DIR+'/'+LOG_NAME+'-'+curDate.getDate()+'-'+curDate.getFullYear()+'.log',
+	fs.appendFile(__dirname+'/'+LOG_DIR+'/'+LOG_NAME+'-'+curDate.getFullYear()
+		+'-'+((''+curDate.getMonth()).length<2?'0':'')+(curDate.getMonth()+1)
+		+'-'+((''+curDate.getDate()).length<2?'0':'')+curDate.getDate()+'.log',
 		linesBuffer.join('\n')+'\n', function(err)
 		{
 		console.log(err||"Message buffer saved!");
