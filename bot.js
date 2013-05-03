@@ -1,10 +1,12 @@
 // Let's invite people to the party !
-var irc = require('irc'), fs = require('fs');
+var irc = require('irc'), fs = require('fs'), twitter = require('twitter');
 
 // vars
 var	linesBuffer=[],
 	bufferTimeout,
 	watchs=[],
+	twittLastDate=new Date(Date.now()),
+
 // consts
  	IRC_SRV='irc.freenode.net',
  	IRC_PORT=8002,
@@ -16,6 +18,7 @@ var	linesBuffer=[],
  	BUFFER_SIZE=10, // lines
 	LOG_DIR='logs', // rel to script path
 	LOG_NAME='irc', // rel to script path
+ 	TWITTER_TIMEOUT=20, // seconds
 	IRC_EVENT_MSG=1,
 	IRC_EVENT_JOIN=2,
 	IRC_EVENT_PART=4,
@@ -25,10 +28,51 @@ var	linesBuffer=[],
 	IRC_EVENT_KICK=64,
 	IRC_EVENT_KILL=128,
 	IRC_EVENT_NICK=256,
+	IRC_EVENT_TWITT=512,
 	IRC_DEST_SELECT=0,
 	IRC_DEST_CHAN=1,
 	IRC_DEST_NICK=2,
 	IRC_DEST_SILENT=4;
+
+// Init twitter api
+var twit = new twitter(JSON.parse(fs.readFileSync(__dirname+'/twitter-conf.json')));
+
+// Listening for MAIN_CHANNEL twitts
+function getTwitts()
+	{
+	twit.search(MAIN_CHANNEL, function(data)
+		{
+		if(data&&data.results&&data.results.length)
+			{
+			// Throwing old tweets away
+			var i=data.results.length-1;
+			while(i>=0&&Date.parse(data.results[i].created_at)<=twittLastDate.getTime())
+				i--;
+			// Displaying left twitts
+			if(i>=0)
+				{
+				console.log(twittLastDate+" : Caught some tweets("+(i+1)+"), displaying!");
+				// Renew the last twitt date
+				twittLastDate=new Date(data.results[0].created_at);
+				}
+			else
+				console.log(twittLastDate+" : No new tweet to display.");
+			while(i>=0)
+				client.say(MAIN_CHANNEL,logMessage(IRC_EVENT_TWITT|IRC_EVENT_BOT,
+					[BOT_NAME, 'Twitter.com'+MAIN_CHANNEL+' - '
+						+'@'+data.results[i].from_user
+						+': '+data.results[i--].text
+							.replace('&lt;','<')
+							.replace('&gt;','>')
+							.replace('&quot;','"')
+							.replace('&amp;','&')
+					]));
+			}
+		else
+			console.log(twittLastDate+" : Couldn\'t get tweets!");
+		});
+	setTimeout(getTwitts,TWITTER_TIMEOUT*1000);
+	}
 
 // Write messages to the log when timeout is fired
 function writeMessages()
@@ -39,7 +83,7 @@ function writeMessages()
 		+'-'+((''+curDate.getDate()).length<2?'0':'')+curDate.getDate()+'.log',
 		linesBuffer.join('\n')+'\n', function(err)
 		{
-		console.log(err||"Message buffer saved!");
+		console.log(err||curDate+" : Message buffer saved!");
 		});
 	linesBuffer.length=0;
 	}
@@ -101,7 +145,7 @@ function executeCommand(command,nick,origin)
 			var args=command.split(' ');
 			if(args.length<2)
 				{
-				messages=[IRC_DEST_CHAN,'Not enought args given for the d command.'];
+				messages=['Not enought args given for the d command.'];
 				break;
 				}
 			args[1]=parseInt(args[1]);
@@ -130,6 +174,22 @@ function executeCommand(command,nick,origin)
 				}
 			dest=IRC_DEST_CHAN|IRC_DEST_SILENT;
 			messages=[command.split(' ').splice(1).join(' ')];
+			break;
+		case 'twittime':
+			dest=IRC_DEST_NICK;
+			if(-1===ADMINS.indexOf(nick))
+				{
+				messages=['Not allowed to do that.'];
+				break;
+				}
+			var args=command.split(' ');
+			if(args.length<2)
+				{
+				messages=['Not enought args given for the twittime command.'];
+				break;
+				}
+			twittLastDate=new Date(parseInt(args[1])),
+			messages=['You mastered the time, doc.'];
 			break;
 		case 'bitch':
 		case 'bastard':
@@ -186,7 +246,7 @@ function executeCommand(command,nick,origin)
 			messages=['Not implemented, but feel free to : https://github.com/francejs/irc-bot'];
 			break;
 		default:
-			dest=IRC_DEST_SELECT;
+			dest=IRC_DEST_NICK;
 			messages=["You\'re talking to me ?? Try ls."];
 			break;
 		}
@@ -208,7 +268,7 @@ var client = new irc.Client(IRC_SRV, BOT_NAME,
 	realName: BOT_REAL_NAME,
 	port: IRC_PORT,
 	autoRejoin: false,
-    autoConnect: false
+	autoConnect: false
 	});
 
 // Connecting to IRC
@@ -246,6 +306,7 @@ client.addListener('join'+MAIN_CHANNEL, function (nick, message)
 	if(-1!==nick.indexOf(BOT_NAME))
 		{
 		logMessage(IRC_EVENT_JOIN|IRC_EVENT_BOT,[nick, nick+' join the chan.']);
+		getTwitts();
 		//client.say(MAIN_CHANNEL, logMessage(IRC_EVENT_MSG|IRC_EVENT_BOT,[BOT_NAME,'Pouah! This chan is filled with humans.']));
 		}
 	else
