@@ -58,15 +58,22 @@ function getTwitts()
 			else
 				console.log(twittLastDate+" : No new tweet to display.");
 			while(i>=0)
+				{
+				if(0!==data.results[i].text.indexOf('RT')||-1>i--)
 				client.say(MAIN_CHANNEL,logMessage(IRC_EVENT_TWITT|IRC_EVENT_BOT,
 					[BOT_NAME, 'Twitter.com'+MAIN_CHANNEL+' - '
 						+'@'+data.results[i].from_user
+							.replace('&lt;','<')
+							.replace('&gt;','>')
+							.replace('&quot;','"')
+							.replace('&amp;','&')
 						+': '+data.results[i--].text
 							.replace('&lt;','<')
 							.replace('&gt;','>')
 							.replace('&quot;','"')
 							.replace('&amp;','&')
 					]));
+				}
 			}
 		else
 			console.log(twittLastDate+" : Couldn\'t get tweets!");
@@ -190,6 +197,25 @@ function executeCommand(command,nick,origin)
 				}
 			twittLastDate=new Date(parseInt(args[1])),
 			messages=['You mastered the time, doc.'];
+			break;
+		case 'tweet':
+			dest=IRC_DEST_NICK;
+			if(-1===ADMINS.indexOf(nick))
+				{
+				messages=['You aren\'t allowed to tweet.'];
+				break;
+				}
+			var tweet=command.split(' ').splice(1).join(' ');
+			if(tweet.length<5)
+				{
+				messages=['No tweet or tweet too small.'];
+				break;
+				}
+			twit.updateStatus(tweet, function(data)
+				{
+				console.log(JSON.stringify(data));
+				});
+			messages=['Your tweet has been sent ('+tweet+').'];
 			break;
 		case 'bitch':
 		case 'bastard':
