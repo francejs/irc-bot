@@ -8,7 +8,10 @@ Oh, be cool with our bot even if he doesn't like humans that much.
 
 Getting started
 ------------
-npm install irc; echo 'Enjoy'
+    npm install irc
+    npm install twitter
+
+Don't forget to edit `twitter-conf-sample.json` and rename / copy it to `twitter-conf.json`
 
 For your information
 ------------
