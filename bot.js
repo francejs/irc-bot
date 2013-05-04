@@ -1,5 +1,6 @@
 // Let's invite people to the party !
-var irc = require('irc'), fs = require('fs'), twitter = require('twitter');
+var irc = require('irc'), fs = require('fs'), twitter = require('twitter'),
+	Sandbox = require('sandbox');
 
 // vars
 var	linesBuffer=[],
@@ -121,7 +122,7 @@ function logMessage(type,fields)
 // Commands
 function executeCommand(command,nick,origin)
 	{
-	var messages, destination;
+	var messages, dest;
 	switch(command.split(' ')[0].toLowerCase())
 		{
 		case 'ls':
@@ -134,6 +135,7 @@ function executeCommand(command,nick,origin)
 				'- watch <nickname> : tells you when <nickname> talk',
 				'- unwatch <nickname> : stops telling you when <nickname> talk',
 				'- dice <faces> <num> : Lets hazard comes',
+				'- eval <code> : Life is dangerous',
 				'- seen <nickname> : last connection of <nickname> (not implemented)',
 				'- diffuse <message> : diffuse a message to each js chan (#parisjs, #francejs) (not implemented)',
 				'- log <n> <start> <date> : give the <n> messages nick <start> on <date> (not implemented)',
@@ -181,6 +183,16 @@ function executeCommand(command,nick,origin)
 				}
 			dest=IRC_DEST_CHAN|IRC_DEST_SILENT;
 			messages=[command.split(' ').splice(1).join(' ')];
+			break;
+		case 'eval':
+			var s = new Sandbox();
+			s.run(command.split(' ').splice(1).join(' '), function(output)
+				{
+				client.say(MAIN_CHANNEL,logMessage(
+					IRC_EVENT_MSG|IRC_EVENT_BOT,
+					[BOT_NAME,nick +': '+ output.result]));
+				});
+			messages=['Running...'];
 			break;
 		case 'twittime':
 			dest=IRC_DEST_NICK;
