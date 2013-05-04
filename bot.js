@@ -1,5 +1,6 @@
 // Let's invite people to the party !
-var irc = require('irc'), fs = require('fs'), twitter = require('twitter');
+var irc = require('irc'), fs = require('fs'), twitter = require('twitter'),
+	Sandbox = require('sandbox'), http = require('http');
 
 // vars
 var	linesBuffer=[],
@@ -121,7 +122,7 @@ function logMessage(type,fields)
 // Commands
 function executeCommand(command,nick,origin)
 	{
-	var messages, destination;
+	var messages, dest;
 	switch(command.split(' ')[0].toLowerCase())
 		{
 		case 'ls':
@@ -134,6 +135,7 @@ function executeCommand(command,nick,origin)
 				'- watch <nickname> : tells you when <nickname> talk',
 				'- unwatch <nickname> : stops telling you when <nickname> talk',
 				'- dice <faces> <num> : Lets hazard comes',
+				'- eval <code> : Life is dangerous',
 				'- seen <nickname> : last connection of <nickname> (not implemented)',
 				'- diffuse <message> : diffuse a message to each js chan (#parisjs, #francejs) (not implemented)',
 				'- log <n> <start> <date> : give the <n> messages nick <start> on <date> (not implemented)',
@@ -182,6 +184,16 @@ function executeCommand(command,nick,origin)
 			dest=IRC_DEST_CHAN|IRC_DEST_SILENT;
 			messages=[command.split(' ').splice(1).join(' ')];
 			break;
+		case 'eval':
+			var s = new Sandbox();
+			s.run(command.split(' ').splice(1).join(' '), function(output)
+				{
+				client.say(MAIN_CHANNEL,logMessage(
+					IRC_EVENT_MSG|IRC_EVENT_BOT,
+					[BOT_NAME,nick +': '+ output.result]));
+				});
+			messages=['Running...'];
+			break;
 		case 'twittime':
 			dest=IRC_DEST_NICK;
 			if(-1===ADMINS.indexOf(nick))
@@ -216,6 +228,41 @@ function executeCommand(command,nick,origin)
 				console.log(JSON.stringify(data));
 				});
 			messages=['Your tweet has been sent ('+tweet+').'];
+			break;
+		case 'quote':
+			var req = http.request(
+				{
+				host: 'www.iheartquotes.com',
+				port: 80,
+				path: '/api/v1/random?source=esr+humorix_misc+humorix_stories+joel_on_software'
+					+'+macintosh+math+mav_flame+osp_rules+paul_graham+prog_style+subversion'
+					+'&max_lines=4&max_characters=256&format=json',
+				method: 'GET'
+				}, function(res)
+				{
+				var body='';
+				res.setEncoding('utf8');
+				res.on('data', function (chunk)
+					{
+					body+=chunk;
+					});
+				res.on('end', function (chunk)
+					{
+					var result=JSON.parse(body);
+					client.say(MAIN_CHANNEL,logMessage(
+						IRC_EVENT_MSG|IRC_EVENT_BOT,
+						[BOT_NAME,result.quote]));
+					client.say(MAIN_CHANNEL,logMessage(
+						IRC_EVENT_MSG|IRC_EVENT_BOT,
+						[BOT_NAME,'Source: '+result.link]));
+					});
+				});
+			req.on('error', function(e)
+				{
+				console.log('Couldn\'t retrieve the fortune: ' + e.message);
+				});
+			req.write('');
+			req.end();
 			break;
 		case 'bitch':
 		case 'bastard':
