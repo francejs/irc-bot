@@ -1,6 +1,6 @@
 // Let's invite people to the party !
 var irc = require('irc'), fs = require('fs'), twitter = require('twitter'),
-	Sandbox = require('sandbox');
+	Sandbox = require('sandbox'), http = require('http');
 
 // vars
 var	linesBuffer=[],
@@ -228,6 +228,41 @@ function executeCommand(command,nick,origin)
 				console.log(JSON.stringify(data));
 				});
 			messages=['Your tweet has been sent ('+tweet+').'];
+			break;
+		case 'quote':
+			var req = http.request(
+				{
+				host: 'www.iheartquotes.com',
+				port: 80,
+				path: '/api/v1/random?source=esr+humorix_misc+humorix_stories+joel_on_software'
+					+'+macintosh+math+mav_flame+osp_rules+paul_graham+prog_style+subversion'
+					+'&max_lines=4&max_characters=256&format=json',
+				method: 'GET'
+				}, function(res)
+				{
+				var body='';
+				res.setEncoding('utf8');
+				res.on('data', function (chunk)
+					{
+					body+=chunk;
+					});
+				res.on('end', function (chunk)
+					{
+					var result=JSON.parse(body);
+					client.say(MAIN_CHANNEL,logMessage(
+						IRC_EVENT_MSG|IRC_EVENT_BOT,
+						[BOT_NAME,result.quote]));
+					client.say(MAIN_CHANNEL,logMessage(
+						IRC_EVENT_MSG|IRC_EVENT_BOT,
+						[BOT_NAME,'Source: '+result.link]));
+					});
+				});
+			req.on('error', function(e)
+				{
+				console.log('Couldn\'t retrieve the fortune: ' + e.message);
+				});
+			req.write('');
+			req.end();
 			break;
 		case 'bitch':
 		case 'bastard':
