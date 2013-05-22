@@ -7,6 +7,8 @@ var	linesBuffer=[],
 	bufferTimeout,
 	watchs=[],
 	twittLastDate=new Date(Date.now()),
+	votingTweets=[],
+	votingIds=0;
 
 // consts
  	IRC_SRV='irc.freenode.net',
@@ -17,8 +19,8 @@ var	linesBuffer=[],
  	ADMINS=['nfroidure','naholyr','_kud'],
  	BUFFER_TIMEOUT=6, // seconds
  	BUFFER_SIZE=10, // lines
-	LOG_DIR='logs', // rel to script path
-	LOG_NAME='irc', // rel to script path
+	LOG_DIR='logs', // rel to log path
+	LOG_NAME='irc', // log filename
  	TWITTER_TIMEOUT=20, // seconds
 	IRC_EVENT_MSG=1,
 	IRC_EVENT_JOIN=2,
@@ -190,7 +192,7 @@ function executeCommand(command,nick,origin)
 				{
 				client.say(MAIN_CHANNEL,logMessage(
 					IRC_EVENT_MSG|IRC_EVENT_BOT,
-					[BOT_NAME,nick +': '+ output.result]));
+					[BOT_NAME,nick +': '+ output.result.substr(0,50)]));
 				});
 			messages=['Running...'];
 			break;
@@ -209,6 +211,63 @@ function executeCommand(command,nick,origin)
 				}
 			twittLastDate=new Date(parseInt(args[1])),
 			messages=['You mastered the time, doc.'];
+			break;
+		case 'wannatweet':
+			dest=IRC_DEST_SELECT;
+			var tweet=command.split(' ').splice(1).join(' ');
+			if(tweet.length<5)
+				{
+				messages=['No tweet or tweet too small.'];
+				break;
+				}
+			votingTweets.push({'tweet':tweet,'votes':1,'voters':[nick],'id':(++votingIds)});
+			messages=['Tweet #'+votingIds+' added send "vote '+votingIds+' ++|--" to give your opinion.'];
+			break;
+		case 'vote':
+			var args=command.split(' ');
+			if(args.length<2)
+				{
+				dest=IRC_DEST_NICK;
+				messages=votingTweets.map(function(v){
+					return '#'+v.id+': '+v.tweet+' (votes: '+v.votes+').'});
+				break;
+				}
+			args[1]=parseInt(args[1]);
+			if(isNaN(args[1])||!votingTweets.some(function(votingTweet,index){
+				if(votingTweet.id!=args[1])
+					return false;
+				if((!args[2])||(args[2]!='--'&&args[2]!='++')) {
+					messages=['Bad arg #2, use --|++.'];
+					return true;
+					}
+				if(-1!==votingTweet.voters.indexOf(nick)) {
+					messages=['It seems you already voted for this tweet.'];
+					}
+				else
+					{
+					votingTweet.voters.push(nick);
+					votingTweet.votes+=('--'==args[2]?-1:1);
+					messages=['Voted ! Current vote sum is '+votingTweet.votes+'.'];
+					if(votingTweet.votes<=-3) {
+						messages=['Too many negative votes, tweet removed.'];
+						votingTweets.splice(index,1);
+						}
+					else if(votingTweet.votes>=5) {
+						twit.updateStatus(votingTweet.tweet, function(data)
+							{
+							console.log(JSON.stringify(data));
+							});
+						messages=['So, let\'s tweet it guys ;).'];
+						votingTweets.splice(index,1);
+						}
+					}
+				return true;
+				}))
+				{
+				messages=['Invalid voting tweet number (format: vote [tweetid] ++|--).'];
+				break;
+				}
+			dest=IRC_DEST_SELECT;
 			break;
 		case 'tweet':
 			dest=IRC_DEST_NICK;
@@ -340,8 +399,12 @@ var client = new irc.Client(IRC_SRV, BOT_NAME,
 	{
 	realName: BOT_REAL_NAME,
 	port: IRC_PORT,
-	autoRejoin: false,
-	autoConnect: false
+	autoRejoin: true,
+	autoConnect: false,
+	debug: true,
+	showErrors: true,
+	floodProtection: true,
+	floodProtectionDelay: 2000
 	});
 
 // Connecting to IRC
